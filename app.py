@@ -39,20 +39,19 @@ if api_key:
             documents = loader.load()
 
             # Vectorización e indexación con Embeddings gratuitos de Google
-            embeddings = GoogleGenerativeAIEmbeddings(
-                model="models/text-embedding-004",
+           embeddings = GoogleGenerativeAIEmbeddings(
+                model="text-embedding-004",
                 google_api_key=api_key
             )
             vectorstore = FAISS.from_documents(documents, embeddings)
             retriever = vectorstore.as_retriever()
 
             # Configurar LLM gratuito de Gemini
-            llm = ChatGoogleGenerativeAI(
+           llm = ChatGoogleGenerativeAI(
                 model="gemini-1.5-flash",
                 google_api_key=api_key,
                 temperature=0
             )
-
             # Plantilla de prompt
             system_prompt = (
                 "Eres un asistente para preguntas y respuestas. "
