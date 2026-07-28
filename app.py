@@ -2,7 +2,10 @@ import os
 import streamlit as st
 from langchain_community.document_loaders import PyPDFLoader, CSVLoader
 from langchain_community.vectorstores import FAISS
-from langchain.chains import RetrievalQA
+from langchain_openai import OpenAIEmbeddings, ChatOpenAI
+from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain.chains import create_retrieval_chain
+from langchain_core.prompts import ChatPromptTemplate
 
 st.set_page_config(page_title="Agente de Consulta Documental", page_icon="🤖")
 st.title("🤖 Agente RAG - Consulta de Documentos")
@@ -39,9 +42,22 @@ if api_key:
         vectorstore = FAISS.from_documents(documents, embeddings)
         retriever = vectorstore.as_retriever()
 
-        # Configurar LLM
+        # Configurar LLM, Prompt y Cadena RAG
         llm = ChatOpenAI(model="gpt-3.5-turbo", temperature=0)
-        qa_chain = RetrievalQA.from_chain_type(llm=llm, retriever=retriever)
+        
+        system_prompt = (
+            "Eres un asistente para preguntas y respuestas. "
+            "Usa los siguientes fragmentos de contexto para responder la pregunta. "
+            "Si no sabes la respuesta, di que no la sabes.\n\n"
+            "{context}"
+        )
+        prompt = ChatPromptTemplate.from_messages([
+            ("system", system_prompt),
+            ("human", "{input}"),
+        ])
+
+        question_answer_chain = create_stuff_documents_chain(llm, prompt)
+        rag_chain = create_retrieval_chain(retriever, question_answer_chain)
 
         st.success("✅ Documento listo para consultas.")
 
@@ -50,8 +66,8 @@ if api_key:
 
         if user_query:
             with st.spinner("Buscando respuesta..."):
-                response = qa_chain.run(user_query)
+                response = rag_chain.invoke({"input": user_query})
                 st.subheader("Respuesta del Agente:")
-                st.write(response)
+                st.write(response["answer"])
 else:
     st.warning("Por favor, ingresa tu API Key en la barra lateral para continuar.")
