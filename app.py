@@ -14,7 +14,7 @@ st.markdown("""
 Esta aplicación permite cargar un documento (**PDF** o **CSV**) y realizar preguntas sobre su contenido utilizando Inteligencia Artificial **gratuita** de Google Gemini.
 """)
 
-# API Key de Google Gemini (ingresada por el usuario)
+# API Key de Google Gemini
 api_key = st.sidebar.text_input("Ingresa tu Google Gemini API Key:", type="password")
 
 if api_key:
@@ -38,8 +38,8 @@ if api_key:
 
             documents = loader.load()
 
-            # Vectorización e indexación con Embeddings gratuitos de Google
-           embeddings = GoogleGenerativeAIEmbeddings(
+            # Vectorización e indexación con Embeddings de Google
+            embeddings = GoogleGenerativeAIEmbeddings(
                 model="text-embedding-004",
                 google_api_key=api_key
             )
@@ -47,11 +47,12 @@ if api_key:
             retriever = vectorstore.as_retriever()
 
             # Configurar LLM gratuito de Gemini
-           llm = ChatGoogleGenerativeAI(
+            llm = ChatGoogleGenerativeAI(
                 model="gemini-1.5-flash",
                 google_api_key=api_key,
                 temperature=0
             )
+
             # Plantilla de prompt
             system_prompt = (
                 "Eres un asistente para preguntas y respuestas. "
@@ -62,11 +63,11 @@ if api_key:
             )
             prompt = ChatPromptTemplate.from_template(system_prompt)
 
-            # Función auxiliar para formatear los documentos recuperados
+            # Función para formatear documentos
             def format_docs(docs):
                 return "\n\n".join(doc.page_content for doc in docs)
 
-            # Cadena RAG construida con LCEL (sin requerir langchain.chains)
+            # Cadena RAG con LCEL
             rag_chain = (
                 {"context": retriever | format_docs, "question": RunnablePassthrough()}
                 | prompt
