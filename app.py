@@ -40,7 +40,7 @@ if api_key:
 
             # Vectorización con modelo de embedding compatible
             embeddings = GoogleGenerativeAIEmbeddings(
-                model="models/embedding-001",
+                model="models/text-embedding-004",
                 google_api_key=api_key
             )
             vectorstore = FAISS.from_documents(documents, embeddings)
