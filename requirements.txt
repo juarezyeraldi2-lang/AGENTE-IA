@@ -1,6 +1,6 @@
 streamlit
 langchain-community
 langchain-core
-langchain-openai
+langchain-google-genai
 faiss-cpu
 pypdf
