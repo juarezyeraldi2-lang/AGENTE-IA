@@ -4,8 +4,8 @@ from langchain_community.document_loaders import PyPDFLoader, CSVLoader
 from langchain_community.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain.chains import create_retrieval_chain
-from langchain.chains.combine_documents import create_stuff_documents_chain
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.runnables import RunnablePassthrough
 
 st.set_page_config(page_title="Agente de Consulta Documental", page_icon="🤖")
 st.title("🤖 Agente RAG - Consulta de Documentos (Gemini)")
@@ -52,20 +52,28 @@ if api_key:
                 google_api_key=api_key,
                 temperature=0
             )
-            
+
+            # Plantilla de prompt
             system_prompt = (
                 "Eres un asistente para preguntas y respuestas. "
-                "Usa los siguientes fragmentos de contexto para responder la pregunta. "
-                "Si no sabes la respuesta, di que no la sabes.\n\n"
-                "{context}"
+                "Usa los siguientes fragmentos de contexto para responder la pregunta de forma clara.\n"
+                "Si no sabes la respuesta o el documento no la contiene, di explícitamente que no la sabes.\n\n"
+                "Contexto:\n{context}\n\n"
+                "Pregunta: {question}"
             )
-            prompt = ChatPromptTemplate.from_messages([
-                ("system", system_prompt),
-                ("human", "{input}"),
-            ])
+            prompt = ChatPromptTemplate.from_template(system_prompt)
 
-            question_answer_chain = create_stuff_documents_chain(llm, prompt)
-            rag_chain = create_retrieval_chain(retriever, question_answer_chain)
+            # Función auxiliar para formatear los documentos recuperados
+            def format_docs(docs):
+                return "\n\n".join(doc.page_content for doc in docs)
+
+            # Cadena RAG construida con LCEL (sin requerir langchain.chains)
+            rag_chain = (
+                {"context": retriever | format_docs, "question": RunnablePassthrough()}
+                | prompt
+                | llm
+                | StrOutputParser()
+            )
 
             st.success("✅ Documento listo para consultas con Gemini.")
 
@@ -74,9 +82,9 @@ if api_key:
 
             if user_query:
                 with st.spinner("Buscando respuesta..."):
-                    response = rag_chain.invoke({"input": user_query})
+                    response = rag_chain.invoke(user_query)
                     st.subheader("Respuesta del Agente:")
-                    st.write(response["answer"])
+                    st.write(response)
 
         except Exception as e:
             st.error(f"❌ Error al procesar el documento: {e}")
