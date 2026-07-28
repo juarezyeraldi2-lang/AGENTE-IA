@@ -2,7 +2,8 @@ import os
 import streamlit as st
 from langchain_community.document_loaders import PyPDFLoader, CSVLoader
 from langchain_community.vectorstores import FAISS
-from langchain_google_genai import GoogleGenerativeAIEmbeddings, ChatGoogleGenerativeAI
+from langchain_community.embeddings import HuggingFaceEmbeddings
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.runnables import RunnablePassthrough
@@ -38,11 +39,9 @@ if api_key:
 
             documents = loader.load()
 
-            # Vectorización con modelo de embedding compatible
-            embeddings = GoogleGenerativeAIEmbeddings(
-                model="text-embedding-004",
-                google_api_key=api_key
-            )
+            # Vectorización gratuita y local con HuggingFace (sin problemas de API Key/v1beta)
+            embeddings = HuggingFaceEmbeddings(model_name="all-MiniLM-L6-v2")
+            
             vectorstore = FAISS.from_documents(documents, embeddings)
             retriever = vectorstore.as_retriever()
 
