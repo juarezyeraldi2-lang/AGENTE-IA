@@ -2,11 +2,7 @@ import os
 import streamlit as st
 from langchain_community.document_loaders import PyPDFLoader, CSVLoader
 from langchain_community.vectorstores import FAISS
-from langchain_openai import OpenAIEmbeddings, ChatOpenAI
-try:
-    from langchain.chains import RetrievalQA
-except ImportError:
-    from langchain_community.chains import RetrievalQA
+from langchain.chains import RetrievalQA
 
 st.set_page_config(page_title="Agente de Consulta Documental", page_icon="🤖")
 st.title("🤖 Agente RAG - Consulta de Documentos")
